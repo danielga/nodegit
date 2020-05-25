@@ -43,6 +43,7 @@
 #cmakedefine HAVE_NETINET_IN_H
 #cmakedefine HAVE_WINDOWS_H
 #cmakedefine HAVE_WINSOCK2_H
+#cmakedefine HAVE_AFUNIX_H
 #cmakedefine HAVE_SNPRINTF
 
 /* snprintf not in Visual Studio CRT and _snprintf dangerously incompatible.

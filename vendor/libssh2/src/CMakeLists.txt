@@ -297,6 +297,7 @@ check_include_files(sys/un.h HAVE_SYS_UN_H)
 check_include_files(windows.h HAVE_WINDOWS_H)
 check_include_files(ws2tcpip.h HAVE_WS2TCPIP_H)
 check_include_files(winsock2.h HAVE_WINSOCK2_H)
+check_include_files("winsock2.h;afunix.h" HAVE_AFUNIX_H)
 
 check_type_size("long long" LONGLONG)
 

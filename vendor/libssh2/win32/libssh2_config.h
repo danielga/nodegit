@@ -20,6 +20,7 @@
 
 #define HAVE_LIBCRYPT32
 #define HAVE_WINSOCK2_H
+#define HAVE_AFUNIX_H
 #define HAVE_IOCTLSOCKET
 #define HAVE_SELECT
 

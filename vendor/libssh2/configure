@@ -18017,7 +18017,7 @@ case $host in
     # These are POSIX-like systems using BSD-like sockets API.
     ;;
   *)
-    for ac_header in windows.h winsock2.h ws2tcpip.h
+    for ac_header in windows.h winsock2.h ws2tcpip.h afunix.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"

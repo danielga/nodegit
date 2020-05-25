@@ -297,7 +297,7 @@ case $host in
     # These are POSIX-like systems using BSD-like sockets API.
     ;;
   *)
-    AC_CHECK_HEADERS([windows.h winsock2.h ws2tcpip.h])
+    AC_CHECK_HEADERS([windows.h winsock2.h ws2tcpip.h afunix.h])
     ;;
 esac
 

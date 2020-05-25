@@ -42,10 +42,12 @@
 #include <errno.h>
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
+#elif defined(HAVE_AFUNIX_H)
+#include <afunix.h>
 #else
-/* Use the existence of sys/un.h as a test if Unix domain socket is
+/* Use the existence of sys/un.h or afunix.h as a test if Unix domain socket is
    supported.  winsock*.h define PF_UNIX/AF_UNIX but do not actually
-   support them. */
+   support them before Windows 10 1703. */
 #undef PF_UNIX
 #endif
 #include "userauth.h"

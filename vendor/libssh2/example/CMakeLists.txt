@@ -86,6 +86,7 @@ check_include_files(sys/time.h HAVE_SYS_TIME_H)
 check_include_files(arpa/inet.h HAVE_ARPA_INET_H)
 check_include_files(netinet/in.h HAVE_NETINET_IN_H)
 check_include_files(winsock2.h HAVE_WINSOCK2_H)
+check_include_files("winsock2.h;afunix.h" HAVE_AFUNIX_H)
 
 check_symbol_exists(strcasecmp strings.h HAVE_STRCASECMP)
 check_symbol_exists(_stricmp string.h HAVE__STRICMP)
