@@ -364,6 +364,99 @@ struct agent_ops agent_ops_pageant = {
     agent_transact_pageant,
     agent_disconnect_pageant
 };
+
+static int
+agent_connect_opensshwin32(LIBSSH2_AGENT *agent)
+{
+    HANDLE pipe = CreateFileA(
+        "\\\\.\\pipe\\openssh-ssh-agent",
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        NULL,
+        OPEN_EXISTING,
+        0,
+        NULL);
+    if(pipe == INVALID_HANDLE_VALUE)
+        return _libssh2_error(agent->session, LIBSSH2_ERROR_BAD_SOCKET,
+                              "failed creating socket");
+    agent->fd = (libssh2_socket_t)pipe;
+    return LIBSSH2_ERROR_NONE;
+}
+
+static int
+agent_transact_opensshwin32(LIBSSH2_AGENT *agent, agent_transaction_ctx_t transctx)
+{
+    unsigned char buf[4];
+    BOOL rc;
+
+    /* Send the length of the request */
+    if(transctx->state == agent_NB_state_request_created) {
+        _libssh2_htonu32(buf, transctx->request_len);
+        DWORD written = 0;
+        rc = WriteFile((HANDLE)agent->fd, buf, (DWORD)sizeof buf, &written, NULL);
+        if(!rc || written != (DWORD)sizeof buf)
+            return _libssh2_error(agent->session, LIBSSH2_ERROR_SOCKET_SEND,
+                                  "agent send failed");
+        transctx->state = agent_NB_state_request_length_sent;
+    }
+
+    /* Send the request body */
+    if(transctx->state == agent_NB_state_request_length_sent) {
+        DWORD written = 0;
+        rc = WriteFile((HANDLE)agent->fd, transctx->request,
+                       (DWORD)transctx->request_len, &written, NULL);
+        if(!rc || written != (DWORD)transctx->request_len)
+            return _libssh2_error(agent->session, LIBSSH2_ERROR_SOCKET_SEND,
+                                  "agent send failed");
+        transctx->state = agent_NB_state_request_sent;
+    }
+
+    /* Receive the length of a response */
+    if(transctx->state == agent_NB_state_request_sent) {
+        DWORD read = 0;
+        rc = ReadFile((HANDLE)agent->fd, buf, sizeof buf, &read, NULL);
+        if(!rc || read != (DWORD)sizeof buf)
+            return _libssh2_error(agent->session, LIBSSH2_ERROR_SOCKET_RECV,
+                                  "agent recv failed");
+        transctx->response_len = _libssh2_ntohu32(buf);
+        transctx->response = LIBSSH2_ALLOC(agent->session,
+                                           transctx->response_len);
+        if(!transctx->response)
+            return LIBSSH2_ERROR_ALLOC;
+
+        transctx->state = agent_NB_state_response_length_received;
+    }
+
+    /* Receive the response body */
+    if(transctx->state == agent_NB_state_response_length_received) {
+        DWORD read = 0;
+        rc = ReadFile((HANDLE)agent->fd, transctx->response,
+                      (DWORD)transctx->response_len, &read, NULL);
+        if(!rc || read != (DWORD)transctx->response_len)
+            return _libssh2_error(agent->session, LIBSSH2_ERROR_SOCKET_SEND,
+                                  "agent recv failed");
+        transctx->state = agent_NB_state_response_received;
+    }
+
+    return 0;
+}
+
+static int
+agent_disconnect_opensshwin32(LIBSSH2_AGENT *agent)
+{
+    if(CloseHandle((HANDLE)agent->fd))
+        agent->fd = LIBSSH2_INVALID_SOCKET;
+    else
+        return _libssh2_error(agent->session, LIBSSH2_ERROR_SOCKET_DISCONNECT,
+                              "failed closing the agent socket");
+    return LIBSSH2_ERROR_NONE;
+}
+
+struct agent_ops agent_ops_opensshwin32 = {
+    agent_connect_opensshwin32,
+    agent_transact_opensshwin32,
+    agent_disconnect_opensshwin32
+};
 #endif  /* WIN32 */
 
 static struct {
@@ -372,6 +465,7 @@ static struct {
 } supported_backends[] = {
 #ifdef WIN32
     {"Pageant", &agent_ops_pageant},
+    {"OpenSSH-Win32", &agent_ops_opensshwin32},
 #endif  /* WIN32 */
 #ifdef PF_UNIX
     {"Unix", &agent_ops_unix},
